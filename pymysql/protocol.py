@@ -20,9 +20,7 @@ UNSIGNED_INT64_COLUMN = 254
 
 def dump_packet(data):  # pragma: no cover
     def printable(data):
-        if 32 <= data < 127:
-            return chr(data)
-        return "."
+        return chr(data) if 32 <= data < 127 else "."
 
     try:
         print("packet length:", len(data))

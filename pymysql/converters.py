@@ -56,7 +56,7 @@ def escape_int(value, mapping=None):
 
 def escape_float(value, mapping=None):
     s = repr(value)
-    if s in ("inf", "nan"):
+    if s in {"inf", "nan"}:
         raise ProgrammingError("%s can not be used with MySQL" % s)
     if "e" not in s:
         s += "e0"
@@ -215,7 +215,7 @@ def convert_timedelta(obj):
         negate = -1 if groups[0] else 1
         hours, minutes, seconds, microseconds = groups[1:]
 
-        tdelta = (
+        return (
             datetime.timedelta(
                 hours=int(hours),
                 minutes=int(minutes),
@@ -224,7 +224,6 @@ def convert_timedelta(obj):
             )
             * negate
         )
-        return tdelta
     except ValueError:
         return obj
 

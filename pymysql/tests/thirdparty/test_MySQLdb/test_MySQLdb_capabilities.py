@@ -100,10 +100,10 @@ class test_MySQLdb(capabilities.DatabaseTest):
         self.connection.ping()
 
     def test_literal_int(self):
-        self.assertTrue("2" == self.connection.literal(2))
+        self.assertTrue(self.connection.literal(2) == "2")
 
     def test_literal_float(self):
         self.assertEqual("3.1415e0", self.connection.literal(3.1415))
 
     def test_literal_string(self):
-        self.assertTrue("'foo'" == self.connection.literal("foo"))
+        self.assertTrue(self.connection.literal("foo") == "'foo'")

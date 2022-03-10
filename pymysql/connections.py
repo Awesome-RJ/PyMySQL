@@ -504,7 +504,7 @@ class Connection:
         if isinstance(obj, (bytes, bytearray)):
             ret = self._quote_bytes(obj)
             if self._binary_prefix:
-                ret = "_binary" + ret
+                ret = f"_binary{ret}"
             return ret
         return converters.escape_item(obj, self.charset, mapping=mapping)
 
@@ -532,9 +532,7 @@ class Connection:
         :param cursor: The type of cursor to create. None means use Cursor.
         :type cursor: :py:class:`Cursor`, :py:class:`SSCursor`, :py:class:`DictCursor`, or :py:class:`SSDictCursor`.
         """
-        if cursor:
-            return cursor(self)
-        return self.cursorclass(self)
+        return cursor(self) if cursor else self.cursorclass(self)
 
     # The following methods are INTERNAL USE ONLY (called from Cursor)
     def query(self, sql, unbuffered=False):
@@ -568,11 +566,10 @@ class Connection:
         :raise Error: If the connection is closed and reconnect=False.
         """
         if self._sock is None:
-            if reconnect:
-                self.connect()
-                reconnect = False
-            else:
+            if not reconnect:
                 raise err.Error("Already closed")
+            self.connect()
+            reconnect = False
         try:
             self._execute_command(COMMAND.COM_PING, "")
             self._read_ok_packet()
@@ -779,10 +776,7 @@ class Connection:
         return result.affected_rows
 
     def insert_id(self):
-        if self._result:
-            return self._result.insert_id
-        else:
-            return 0
+        return self._result.insert_id if self._result else 0
 
     def _execute_command(self, command, sql):
         """
@@ -867,9 +861,8 @@ class Connection:
                 if DEBUG:
                     print("caching_sha2: trying fast path")
                 authresp = _auth.scramble_caching_sha2(self.password, self.salt)
-            else:
-                if DEBUG:
-                    print("caching_sha2: empty password")
+            elif DEBUG:
+                print("caching_sha2: empty password")
         elif self._auth_plugin_name == "sha256_password":
             plugin_name = b"sha256_password"
             if self.ssl and self.server_capabilities & CLIENT.SSL:
@@ -1299,25 +1292,25 @@ class MySQLResult:
         conn_encoding = self.connection.encoding
         description = []
 
-        for i in range(self.field_count):
+        for _ in range(self.field_count):
             field = self.connection._read_packet(FieldDescriptorPacket)
             self.fields.append(field)
             description.append(field.description())
             field_type = field.type_code
             if use_unicode:
-                if field_type == FIELD_TYPE.JSON:
-                    # When SELECT from JSON column: charset = binary
-                    # When SELECT CAST(... AS JSON): charset = connection encoding
-                    # This behavior is different from TEXT / BLOB.
-                    # We should decode result by connection encoding regardless charsetnr.
-                    # See https://github.com/PyMySQL/PyMySQL/issues/488
-                    encoding = conn_encoding  # SELECT CAST(... AS JSON)
-                elif field_type in TEXT_TYPES:
-                    if field.charsetnr == 63:  # binary
-                        # TEXTs with charset=binary means BINARY types.
-                        encoding = None
-                    else:
-                        encoding = conn_encoding
+                if (
+                    field_type != FIELD_TYPE.JSON
+                    and field_type in TEXT_TYPES
+                    and field.charsetnr == 63
+                ):  # binary
+                    # TEXTs with charset=binary means BINARY types.
+                    encoding = None
+                elif (
+                    field_type != FIELD_TYPE.JSON
+                    and field_type in TEXT_TYPES
+                    or field_type == FIELD_TYPE.JSON
+                ):
+                    encoding = conn_encoding
                 else:
                     # Integers, Dates and Times, and other basic data is encoded in ascii
                     encoding = "ascii"

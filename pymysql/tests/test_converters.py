@@ -30,7 +30,7 @@ class TestConverter(TestCase):
         expected = datetime.timedelta(**d)
         if with_negate:
             expected = -expected
-            s = "-" + s
+            s = f"-{s}"
 
         tdelta = converters.convert_timedelta(s)
         self.assertEqual(tdelta, expected)

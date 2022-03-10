@@ -523,11 +523,10 @@ class DatabaseAPI20Test(unittest.TestCase):
         """Return a list of sql commands to setup the DB for the fetch
         tests.
         """
-        populate = [
+        return [
             "insert into %sbooze values ('%s')" % (self.table_prefix, s)
             for s in self.samples
         ]
-        return populate
 
     def test_fetchmany(self):
         con = self._connect()
@@ -591,7 +590,7 @@ class DatabaseAPI20Test(unittest.TestCase):
             rows.sort()
 
             # Make sure we get the right data back out
-            for i in range(0, 6):
+            for i in range(6):
                 self.assertEqual(
                     rows[i],
                     self.samples[i],
@@ -648,7 +647,7 @@ class DatabaseAPI20Test(unittest.TestCase):
             )
             rows = [r[0] for r in rows]
             rows.sort()
-            for i in range(0, len(self.samples)):
+            for i in range(len(self.samples)):
                 self.assertEqual(
                     rows[i], self.samples[i], "cursor.fetchall retrieved incorrect rows"
                 )
@@ -696,12 +695,15 @@ class DatabaseAPI20Test(unittest.TestCase):
                 len(rows56), 2, "fetchall returned incorrect number of rows"
             )
 
-            rows = [rows1[0]]
-            rows.extend([rows23[0][0], rows23[1][0]])
-            rows.append(rows4[0])
-            rows.extend([rows56[0][0], rows56[1][0]])
+            rows = [
+                rows1[0],
+                *[rows23[0][0], rows23[1][0]],
+                rows4[0],
+                *[rows56[0][0], rows56[1][0]],
+            ]
+
             rows.sort()
-            for i in range(0, len(self.samples)):
+            for i in range(len(self.samples)):
                 self.assertEqual(
                     rows[i], self.samples[i], "incorrect data retrieved or inserted"
                 )
@@ -750,7 +752,7 @@ class DatabaseAPI20Test(unittest.TestCase):
                 names = cur.fetchall()
                 assert len(names) == len(self.samples)
                 s = cur.nextset()
-                assert s == None, "No more return sets, should return None"
+                assert s is None, "No more return sets, should return None"
             finally:
                 self.help_nextset_tearDown(cur)
 

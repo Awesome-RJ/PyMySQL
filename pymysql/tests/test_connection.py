@@ -15,7 +15,7 @@ class TempUser:
         self._c = c
         self._user = user
         self._db = db
-        create = "CREATE USER " + user
+        create = f"CREATE USER {user}"
         if password is not None:
             create += " IDENTIFIED BY '%s'" % password
         elif auth is not None:
@@ -143,12 +143,7 @@ class TestAuthentication(base.PyMySQLTestCase):
         self.realtestSocketAuth()
 
     def realtestSocketAuth(self):
-        with TempUser(
-            self.connect().cursor(),
-            TestAuthentication.osuser + "@localhost",
-            self.databases[0]["database"],
-            self.socket_plugin_name,
-        ) as u:
+        with TempUser(self.connect().cursor(), f'{TestAuthentication.osuser}@localhost', self.databases[0]["database"], self.socket_plugin_name) as u:
             c = pymysql.connect(user=TestAuthentication.osuser, **self.db)
 
     class Dialog:
@@ -156,7 +151,6 @@ class TestAuthentication(base.PyMySQLTestCase):
 
         def __init__(self, con):
             self.fail = TestAuthentication.Dialog.fail
-            pass
 
         def prompt(self, echo, prompt):
             if self.fail:
@@ -347,20 +341,14 @@ class TestAuthentication(base.PyMySQLTestCase):
         db["password"] = os.environ.get("PASSWORD")
         cur = self.connect().cursor()
         try:
-            cur.execute("show grants for " + TestAuthentication.osuser + "@localhost")
+            cur.execute(f"show grants for {TestAuthentication.osuser}@localhost")
             grants = cur.fetchone()[0]
-            cur.execute("drop user " + TestAuthentication.osuser + "@localhost")
+            cur.execute(f"drop user {TestAuthentication.osuser}@localhost")
         except pymysql.OperationalError as e:
             # assuming the user doesn't exist which is ok too
             self.assertEqual(1045, e.args[0])
             grants = None
-        with TempUser(
-            cur,
-            TestAuthentication.osuser + "@localhost",
-            self.databases[0]["database"],
-            "pam",
-            os.environ.get("PAMSERVICE"),
-        ) as u:
+        with TempUser(cur, f'{TestAuthentication.osuser}@localhost', self.databases[0]["database"], "pam", os.environ.get("PAMSERVICE")) as u:
             try:
                 c = pymysql.connect(user=TestAuthentication.osuser, **db)
                 db["password"] = "very bad guess at password"

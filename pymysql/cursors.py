@@ -178,8 +178,7 @@ class Cursor:
         if not args:
             return
 
-        m = RE_INSERT_VALUES.match(query)
-        if m:
+        if m := RE_INSERT_VALUES.match(query):
             q_prefix = m.group(1) % ()
             q_values = m.group(2).rstrip()
             q_postfix = m.group(3) or ""
@@ -299,10 +298,7 @@ class Cursor:
         self._check_executed()
         if self._rows is None:
             return ()
-        if self.rownumber:
-            result = self._rows[self.rownumber :]
-        else:
-            result = self._rows
+        result = self._rows[self.rownumber :] if self.rownumber else self._rows
         self.rownumber = len(self._rows)
         return result
 
@@ -371,7 +367,7 @@ class DictCursorMixin:
             for f in self._result.fields:
                 name = f.name
                 if name in fields:
-                    name = f.table_name + "." + name
+                    name = f'{f.table_name}.{name}'
                 fields.append(name)
             self._fields = fields
 
@@ -379,9 +375,7 @@ class DictCursorMixin:
             self._rows = [self._conv_row(r) for r in self._rows]
 
     def _conv_row(self, row):
-        if row is None:
-            return None
-        return self.dict_type(zip(self._fields, row))
+        return None if row is None else self.dict_type(zip(self._fields, row))
 
 
 class DictCursor(DictCursorMixin, Cursor):
@@ -472,7 +466,7 @@ class SSCursor(Cursor):
             size = self.arraysize
 
         rows = []
-        for i in range(size):
+        for _ in range(size):
             row = self.read_next()
             if row is None:
                 break

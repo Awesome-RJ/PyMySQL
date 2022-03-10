@@ -272,7 +272,7 @@ class TestNewIssues(base.PyMySQLTestCase):
             warnings.filterwarnings("ignore")
             c.execute("drop table if exists issue54")
         big_sql = "select * from issue54 where "
-        big_sql += " and ".join("%d=%d" % (i, i) for i in range(0, 100000))
+        big_sql += " and ".join("%d=%d" % (i, i) for i in range(100000))
 
         try:
             c.execute("create table issue54 (id integer primary key)")

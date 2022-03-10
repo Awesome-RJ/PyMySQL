@@ -110,10 +110,7 @@ class DatabaseTest(unittest.TestCase):
         columndefs = ("col1 INT", "col2 VARCHAR(255)")
 
         def generator(row, col):
-            if col == 0:
-                return row
-            else:
-                return ("%i" % (row % 10)) * 255
+            return row if col == 0 else ("%i" % (row % 10)) * 255
 
         self.create_table(columndefs)
         insert_statement = "INSERT INTO %s VALUES (%s)" % (
@@ -147,10 +144,11 @@ class DatabaseTest(unittest.TestCase):
         columndefs = ("col1 INT", "col2 VARCHAR(255)")
 
         def generator(row, col):
-            if col == 0:
-                return row
-            else:
-                return ("%i" % (row % 10)) * ((255 - self.rows // 2) + row)
+            return (
+                row
+                if col == 0
+                else ("%i" % (row % 10)) * ((255 - self.rows // 2) + row)
+            )
 
         self.create_table(columndefs)
         insert_statement = "INSERT INTO %s VALUES (%s)" % (
@@ -276,36 +274,24 @@ class DatabaseTest(unittest.TestCase):
 
     def test_LONG(self):
         def generator(row, col):
-            if col == 0:
-                return row
-            else:
-                return self.BLOBUText  # 'BLOB Text ' * 1024
+            return row if col == 0 else self.BLOBUText
 
         self.check_data_integrity(("col1 INT", "col2 LONG"), generator)
 
     def test_TEXT(self):
         def generator(row, col):
-            if col == 0:
-                return row
-            else:
-                return self.BLOBUText[:5192]  # 'BLOB Text ' * 1024
+            return row if col == 0 else self.BLOBUText[:5192]
 
         self.check_data_integrity(("col1 INT", "col2 TEXT"), generator)
 
     def test_LONG_BYTE(self):
         def generator(row, col):
-            if col == 0:
-                return row
-            else:
-                return self.BLOBBinary  # 'BLOB\000Binary ' * 1024
+            return row if col == 0 else self.BLOBBinary
 
         self.check_data_integrity(("col1 INT", "col2 LONG BYTE"), generator)
 
     def test_BLOB(self):
         def generator(row, col):
-            if col == 0:
-                return row
-            else:
-                return self.BLOBBinary  # 'BLOB\000Binary ' * 1024
+            return row if col == 0 else self.BLOBBinary
 
         self.check_data_integrity(("col1 INT", "col2 BLOB"), generator)

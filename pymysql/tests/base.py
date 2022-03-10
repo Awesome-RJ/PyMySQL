@@ -49,9 +49,7 @@ class PyMySQLTestCase(unittest.TestCase):
     @property
     def connections(self):
         if self._connections is None:
-            self._connections = []
-            for params in self.databases:
-                self._connections.append(pymysql.connect(**params))
+            self._connections = [pymysql.connect(**params) for params in self.databases]
             self.addCleanup(self._teardown_connections)
         return self._connections
 
